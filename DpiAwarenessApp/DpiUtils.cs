@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Timers;
 
@@ -62,13 +63,13 @@ namespace DpiAwarenessApp
                     uint windowDpi = GetDpiForWindow(process.MainWindowHandle);
 
                     // Filter to one app by changing the following filter.
-                    string nameFilter = String.Empty; // E.g. "PBIDesktop"
-                    if (!String.IsNullOrEmpty(nameFilter) && process.ProcessName != nameFilter)
+                    string[] nameFilters = new string[] { }; //  { "CefSharpApp", "PBIDesktop" }; // Filter example
+                    if (nameFilters != null && nameFilters.Length > 0 && !nameFilters.Contains(process.ProcessName))
                     {
                         continue;
                     }
 
-                    Console.WriteLine("Process: {0} ID: {1} Window title: {2} {3} {4}",
+                    Console.WriteLine("Process: {0,-12} ID: {1,5} Awareness: {3,-30}  DPI: {4,3} Title: {2}",
                         process.ProcessName,
                         process.Id,
                         process.MainWindowTitle,
