@@ -45,41 +45,44 @@ namespace DpiAwarenessApp
             Process[] processlist = Process.GetProcesses();
             foreach (Process process in processlist)
             {
+                // Per process
+                PROCESS_DPI_AWARENESS processAwareness;
+                try
+                {
+                    GetProcessDpiAwareness(process.Handle, out processAwareness);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    continue;
+                }
+                catch (Win32Exception ex) when (ex.ErrorCode == -2147467259)
+                {
+                    // Access denied error (E_FAIL)
+                    continue;
+                }
+
+                // Filter to one app by changing the following filter.
+                string[] nameFilters = new string[] { }; //  { "CefSharp.BrowserSubprocess", "PBIDesktop" }; // Filter example
+                if (nameFilters != null && nameFilters.Length > 0 && !nameFilters.Contains(process.ProcessName))
+                {
+                    continue;
+                }
+
+                uint? windowDpi = null;
                 //if (!String.IsNullOrEmpty(process.MainWindowTitle))
                 if (process.MainWindowHandle != IntPtr.Zero)
                 {
-                    // Per process
-                    PROCESS_DPI_AWARENESS processAwareness;
-                    try
-                    {
-                        GetProcessDpiAwareness(process.Handle, out processAwareness);
-                    }
-                    catch (Win32Exception ex) when (ex.ErrorCode == -2147467259)
-                    {
-                        // Access denied error (E_FAIL)
-                        continue;
-                    }
-
-                    uint windowDpi = GetDpiForWindow(process.MainWindowHandle);
-
-                    // Filter to one app by changing the following filter.
-                    string[] nameFilters = new string[] { }; //  { "CefSharpApp", "PBIDesktop" }; // Filter example
-                    if (nameFilters != null && nameFilters.Length > 0 && !nameFilters.Contains(process.ProcessName))
-                    {
-                        continue;
-                    }
-
-                    Console.WriteLine("Process: {0,-12} ID: {1,5} Awareness: {3,-30}  DPI: {4,3} Title: {2}",
-                        process.ProcessName,
-                        process.Id,
-                        process.MainWindowTitle,
-                        processAwareness,
-                        windowDpi);
+                    windowDpi = GetDpiForWindow(process.MainWindowHandle);
                 }
-            }
 
-            //PROCESS_DPI_AWARENESS awareness;
-            //GetProcessDpiAwareness(this.Handle, out awareness);
+                Console.WriteLine("Process: {0,-18} ID: {1,5} Awareness: {3,-30}  DPI: {4,3} Title: {2}",
+                    process.ProcessName,
+                    process.Id,
+                    process.MainWindowTitle,
+                    processAwareness,
+                    windowDpi);
+            }
         }
     }
 }
